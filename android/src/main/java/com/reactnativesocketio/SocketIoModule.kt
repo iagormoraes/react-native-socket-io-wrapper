@@ -80,6 +80,10 @@ class SocketIoModule(private val reactContext: ReactApplicationContext) : ReactC
         options.getString("query").let { socketOptions.query = it }
       }
 
+      callbackRegisters.clear()
+
+      mSocket?.off()
+
       mSocket = IO.socket(url, socketOptions)
 
       callback.invoke(null)
