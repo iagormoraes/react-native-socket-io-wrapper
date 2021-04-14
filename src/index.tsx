@@ -1,6 +1,6 @@
 import { NativeModules, NativeEventEmitter } from 'react-native';
 
-type SocketIOOptions = {
+export type SocketIOOptions = {
   transports?: string[];
   forceNew?: boolean;
   multiplex?: boolean;
@@ -22,7 +22,7 @@ type SocketIOEventData = any;
 
 type SocketCallbackResponse = (error?: Error) => void;
 
-type SocketIOModuleType = {
+export type SocketIOModuleType = {
   initialize(
     url: string,
     options: SocketIOOptions,
@@ -123,6 +123,8 @@ class SocketIO {
 
       if (listItem.eventName === eventName && listItem.callback === callback) {
         keyToDelete = listItem.uniqueID;
+
+        this.SocketIOModule.off(eventName, keyToDelete);
 
         break;
       }
