@@ -1,9 +1,19 @@
 import * as React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import SocketIOInstance from './SocketIO';
+import SocketIO from 'react-native-socket-io';
+import makeSocketIO from './SocketIO';
 
 function useSocketIO() {
-  const [socketIO] = React.useState(SocketIOInstance);
+  const [socketIO, setSocketIO] = React.useState(() => {
+    return makeSocketIO({
+      forceNew: true,
+      transports: ['websocket'],
+      query: SocketIO.serializeQuery({
+        token: 'Bearer JWT2',
+      }),
+    });
+  });
+
   const [value, setValue] = React.useState({
     title: '',
     body: '',
@@ -69,15 +79,31 @@ function useSocketIO() {
     console.log('dataReceived', typeof data, data);
   }, []);
 
-  const onError = React.useCallback((error) => {
-    console.log({ error });
-  }, []);
+  const onError = React.useCallback(
+    (error) => {
+      console.log(error);
+      if (error === 'invalid JWT') {
+        socketIO.disconnect();
+
+        setTimeout(() => {
+          setSocketIO(
+            makeSocketIO({
+              forceNew: true,
+              transports: ['websocket'],
+              query: SocketIO.serializeQuery({
+                token: 'Bearer JWT',
+              }),
+            })
+          );
+        }, 2000);
+      }
+    },
+    [socketIO]
+  );
 
   React.useEffect(() => {
     socketIO.connect();
-  }, [socketIO]);
 
-  React.useEffect(() => {
     socketIO.on('connect', onConnection);
     // socketIO.on('reconnect_attempt', onReconnectAttempt);
     // socketIO.on('send_number', onDataReceived);
@@ -91,6 +117,8 @@ function useSocketIO() {
     socketIO.on('receive_message', onMessage);
 
     return () => {
+      socketIO.disconnect();
+
       socketIO.off('connect', onConnection);
       // socketIO.off('reconnect_attempt', onReconnectAttempt);
       // socketIO.off('send_number', onDataReceived);
