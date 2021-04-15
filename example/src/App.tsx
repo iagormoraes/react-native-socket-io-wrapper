@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import SocketIO from 'react-native-socket-io';
+import SocketIO from 'react-native-socket-io-wrapper';
 import makeSocketIO from './SocketIO';
 
 function useSocketIO() {
