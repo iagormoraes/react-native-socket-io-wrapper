@@ -1,5 +1,5 @@
 {
-  "name": "@itsiagorm/react-native-socket-io",
+  "name": "react-native-socket-io-wrapper",
   "version": "0.1.0",
   "description": "A socket.io wrapper for react native.",
   "main": "lib/commonjs/index",

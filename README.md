@@ -1,4 +1,4 @@
-react-native-socket-io
+react-native-socket-io-wrapper
 ======================
 
 A native implementation of Socket.io for React Native.
@@ -24,7 +24,7 @@ After experiencing some performance problems with the JS socket.io library in Re
 ## Installation
 
 ```sh
-npm install @itsiagorm/react-native-socket-io
+npm install react-native-socket-io-wrapper
 ```
 
 ### Adding with TurboReactPackage class
@@ -44,7 +44,7 @@ In MainApplication.java add the following:
 ## Usage
 
 ```js
-import SocketIO from "react-native-socket-io";
+import SocketIO from "react-native-socket-io-wrapper";
 
 // ...
 const socketIO = new SocketIO('http://127.0.0.1:3000', {
