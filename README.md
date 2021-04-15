@@ -1,16 +1,45 @@
-# react-native-socket-io
+react-native-socket-io
+======================
 
 A native implementation of Socket.io for React Native.
 
-⚠️ Currently working only on Android, the next commits will focus on iOS.
+⚠️ Currently working only on Android, the future commits will focus on iOS.
 
-⚠️ Android uses `io.socket:socket.io-client:1.0.1` which supports only 2x socket.io server.
+⚠️ Android uses `io.socket:socket.io-client:1.0.1` which supports `2.x (or 3.1.x / 4.x with allowEIO3: true)` as described at the [compatibility page](https://socketio.github.io/socket.io-client-java/installation.html).
+
+# Motivation
+
+After experiencing some performance problems with the JS socket.io library in React Native context, I decided to write a module using the Java solution that can be used in the UI/background threads and by doing so, keeping the JS thread more open to others expensive works and having the performance 💯, and a more stable development experience.
+
+# Table of contents
+
+- [Installation](#installation)
+  - [Adding with TurboReactPackage class](#adding-with-turboReactPackage-class)
+- [Usage](#usage)
+- [Methods](#methods)
+- [Todos](#todos)
+- [Contributing](#contributing)
+- [License](#license)
 
 ## Installation
 
 ```sh
 npm install react-native-socket-io
 ```
+
+### Adding with TurboReactPackage class
+
+In MainApplication.java add the following:
+```
+        @Override
+        protected List<ReactPackage> getPackages() {
+          return Arrays.asList(
+            new SocketIoTurboPackage(), // <-- add
+            new MainReactPackage()
+          );
+        }
+```
+
 
 ## Usage
 
@@ -27,25 +56,31 @@ const socketIO = new SocketIO('http://127.0.0.1:3000', {
 ```
 ⚠️ For more info, please see in example of Android the usage of the socket with Hooks and lifecycle.
 
-## Methods (incomplete, please see example)
+## Methods
 
 ### connect
 ```js
 socketIO.connect();
 ```
-Open the connection of socket instance.
+Open socket connection.
 
 ### disconnect
 ```js
 socketIO.disconnect();
 ```
-Close the connection of socket instance.
+Close socket connection.
 
 ### on
 ```js
 socketIO.on(eventName, callback);
 ```
-Listen to the socket event.
+Listen to socket event.
+
+### once
+```js
+socketIO.once(eventName, callback);
+```
+Listen once to socket event.
 
 #### Props
 
@@ -56,16 +91,49 @@ Listen to the socket event.
 ```js
 socketIO.emit(eventName, data);
 ```
-Send a socket event.
+Send socket event.
+
+### off
+```js
+socketIO.off(eventName, data);
+```
+Remove socket event listener.
 
 #### Props
 
 ``eventName: string``
 ``data: any``
 
+### connected
+```js
+socketIO.connected(callback);
+```
+Get connection status of socket.
+
+### connectedSync
+```js
+socketIO.connectedSync();
+```
+Get connection status of socket.
+
+⚠️ this method are synchronous blocking UI, use it carefully.
+
+### getId
+```js
+socketIO.getId(callback);
+```
+Get id of socket.
+
+### getIdSync
+```js
+socketIO.getIdSync();
+```
+Get id of socket.
+
+⚠️ this method are synchronous blocking UI, use it carefully.
+
 ## Todos
 
-- Write comment for each function to assist newbies
 - Write tests
 - Implement iOS native module
 
