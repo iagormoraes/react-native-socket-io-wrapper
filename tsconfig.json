@@ -2,7 +2,7 @@
   "compilerOptions": {
     "baseUrl": "./",
     "paths": {
-      "react-native-socket-io": ["./src/index"]
+      "react-native-socket-io-wrapper": ["./src/index"]
     },
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,
