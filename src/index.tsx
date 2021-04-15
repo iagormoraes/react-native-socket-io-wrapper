@@ -1,5 +1,13 @@
 import { NativeModules, NativeEventEmitter } from 'react-native';
 
+type SocketNativeEvent = {
+  data: any;
+  eventName: string;
+  uniqueID: string;
+};
+
+type SocketCallbackResponse = (error?: Error) => void;
+
 export type SocketIOOptions = {
   transports?: string[];
   forceNew?: boolean;
@@ -12,15 +20,10 @@ export type SocketIOOptions = {
   query?: string;
 };
 
-type SocketNativeEvent = {
-  data: any;
-  eventName: string;
-  uniqueID: string;
-};
+export type SocketIOEventData = any;
 
-type SocketIOEventData = any;
-
-type SocketCallbackResponse = (error?: Error) => void;
+export type SocketConnectedCallback = (connected: boolean) => void;
+export type SocketIdCallback = (id?: string) => void;
 
 export type SocketIOModuleType = {
   initialize(
@@ -34,9 +37,11 @@ export type SocketIOModuleType = {
   on(eventName: string, callback: Function): void;
   once(eventName: string, callback: Function): void;
   off(eventName: string, uniqueID: string): void;
+  connected(callback: SocketConnectedCallback): void;
+  connectedSync(): boolean;
+  getId(callback: SocketIdCallback): void;
+  getIdSync(): string | null;
 };
-
-const SocketIOModule: SocketIOModuleType = NativeModules.SocketIo;
 
 class SocketIO {
   private SocketIOModule: SocketIOModuleType;
@@ -50,7 +55,7 @@ class SocketIO {
   eventEmitter: NativeEventEmitter;
 
   constructor(url: string, options?: SocketIOOptions) {
-    this.SocketIOModule = SocketIOModule;
+    this.SocketIOModule = NativeModules.RNSocketIO;
     this.SocketIOCallbacksList = {};
 
     this.eventEmitter = new NativeEventEmitter(NativeModules.SocketIo);
@@ -77,18 +82,34 @@ class SocketIO {
     }
   }
 
+  /**
+   * Open socket connection.
+   */
   connect() {
     this.SocketIOModule.connect();
   }
 
+  /**
+   * Close socket connection.
+   */
   disconnect() {
     this.SocketIOModule.disconnect();
   }
 
-  emit(eventName: string, data: SocketIOEventData) {
+  /**
+   * Send socket event.
+   * @param eventName Name of socket event.
+   * @param data Data to send on socket event.
+   */
+  emit(eventName: string, data?: SocketIOEventData) {
     this.SocketIOModule.emit(eventName, { data });
   }
 
+  /**
+   * Listen to socket event.
+   * @param eventName Name of socket event.
+   * @param callback Callback to listen to socket event.
+   */
   on(eventName: string, callback: Function) {
     this.SocketIOModule.on(
       eventName,
@@ -102,6 +123,11 @@ class SocketIO {
     );
   }
 
+  /**
+   * Listen once to socket event.
+   * @param eventName Name of socket event.
+   * @param callback Callback to listen to socket event.
+   */
   once(eventName: string, callback: Function) {
     this.SocketIOModule.once(
       eventName,
@@ -115,6 +141,11 @@ class SocketIO {
     );
   }
 
+  /**
+   * Remove socket event listener.
+   * @param eventName Name of socket event.
+   * @param callback Callback of registered socket event.
+   */
   off(eventName: string, callback: Function) {
     let keyToDelete: string | null = null;
 
@@ -133,6 +164,38 @@ class SocketIO {
     if (keyToDelete) {
       delete this.SocketIOCallbacksList[keyToDelete];
     }
+  }
+
+  /**
+   * Get connection status of socket.
+   * @param callback Callback with connection status of socket.
+   */
+  connected(callback: SocketConnectedCallback) {
+    this.SocketIOModule.connected(callback);
+  }
+
+  /**
+   * Get id of socket.
+   * @param callback Callback with id of socket.
+   */
+  getId(callback: SocketIdCallback) {
+    this.SocketIOModule.getId(callback);
+  }
+
+  /**
+   * Get connection status of socket.
+   * Warning: this method are synchronous blocking UI, use it carefully.
+   */
+  connectedSync() {
+    return this.SocketIOModule.connectedSync();
+  }
+
+  /**
+   * Get id of socket.
+   * Warning: this method are synchronous blocking UI, use it carefully.
+   */
+  getIdSync() {
+    return this.SocketIOModule.getIdSync();
   }
 
   static serializeQuery(object: any) {

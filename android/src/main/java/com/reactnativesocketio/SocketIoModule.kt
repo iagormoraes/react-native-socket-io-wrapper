@@ -1,12 +1,11 @@
 package com.reactnativesocketio
 
 import com.facebook.react.bridge.*
+import com.facebook.react.module.annotations.ReactModule
 import com.facebook.react.modules.core.DeviceEventManagerModule
 
 import io.socket.client.IO
 import io.socket.client.Socket
-import io.socket.emitter.Emitter
-import io.socket.engineio.client.EngineIOException
 
 import org.json.JSONArray
 import org.json.JSONObject
@@ -17,13 +16,22 @@ import kotlin.collections.ArrayList
 import kotlin.math.round
 
 
+@ReactModule(name = SocketIoModule.NAME, hasConstants = false)
 class SocketIoModule(private val reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
-  private val callbackRegisters: ArrayList<CallbackRegister> = ArrayList()
+  companion object { const val NAME = "RNSocketIO" }
 
   private var mSocket: Socket? = null
 
+  private val callbackRegisters: ArrayList<CallbackRegister> = ArrayList()
+
+  private val callbackListener = object : SocketCallback {
+    override fun onReceive(eventName: String, props: WritableMap) {
+      sendEvent(eventName, props)
+    }
+  }
+
   override fun getName(): String {
-    return "SocketIo"
+    return NAME
   }
 
   override fun onCatalystInstanceDestroy() {
@@ -32,6 +40,25 @@ class SocketIoModule(private val reactContext: ReactApplicationContext) : ReactC
     callbackRegisters.forEach { mSocket?.off(it.eventName, it.onEventListener) }
 
     callbackRegisters.clear()
+  }
+
+  private fun sendEvent(eventName: String, props: WritableMap) {
+    props.putString("eventName", eventName)
+
+    if(reactContext.hasActiveCatalystInstance()) {
+      reactContext
+        .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
+        .emit("onEventListener", props)
+    }
+  }
+
+  private fun buildCallbackRegister(eventName: String): CallbackRegister {
+    val uniqueID = UUID.randomUUID().toString()
+    val callbackRegister = CallbackRegister(eventName, uniqueID, callbackListener)
+
+    callbackRegisters.add(callbackRegister)
+
+    return callbackRegister
   }
 
   @ReactMethod
@@ -139,19 +166,20 @@ class SocketIoModule(private val reactContext: ReactApplicationContext) : ReactC
 
   @ReactMethod
   fun on(eventName: String, callback: Callback) {
-    val uniqueID = UUID.randomUUID().toString()
-    val callbackRegister = CallbackRegister(eventName, uniqueID)
+    val callbackRegister = buildCallbackRegister(eventName)
 
-    callbackRegisters.add(callbackRegister)
-
-    callback.invoke(eventName, uniqueID)
+    callback.invoke(eventName, callbackRegister.uniqueID)
 
     mSocket?.on(eventName, callbackRegister.onEventListener)
   }
 
   @ReactMethod
   fun once(eventName: String, callback: Callback) {
-    this.on(eventName, callback)
+    val callbackRegister = buildCallbackRegister(eventName)
+
+    callback.invoke(eventName, callbackRegister.uniqueID)
+
+    mSocket?.once(eventName, callbackRegister.onEventListener)
   }
 
   @ReactMethod
@@ -165,56 +193,23 @@ class SocketIoModule(private val reactContext: ReactApplicationContext) : ReactC
     callbackRegisters.removeAt(index)
   }
 
-  fun sendEvent(eventName: String, props: WritableMap) {
-    props.putString("eventName", eventName)
-
-    if(reactContext.hasActiveCatalystInstance()) {
-      reactContext
-        .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
-        .emit("onEventListener", props)
-    }
+  @ReactMethod
+  fun connected(promise: Promise) {
+    promise.resolve(connectedSync())
   }
 
-  inner class CallbackRegister(val eventName: String, val uniqueID: String) {
-    val onEventListener = Emitter.Listener { args ->
-      val props = Arguments.createMap()
+  @ReactMethod
+  fun getId(promise: Promise) {
+    promise.resolve(getIdSync())
+  }
 
-      props.putString("uniqueID", uniqueID)
+  @ReactMethod(isBlockingSynchronousMethod = true)
+  fun connectedSync(): Boolean {
+    return mSocket?.connected() ?: false
+  }
 
-      if(args.isNotEmpty()) {
-        when(val data = args[0]) {
-          is Int -> {
-            props.putInt("data", data)
-          }
-          is Double -> {
-            props.putDouble("data", data)
-          }
-          is Boolean -> {
-            props.putBoolean("data", data)
-          }
-          is String -> {
-            props.putString("data", data)
-          }
-          is JSONObject -> {
-            val dataMap = Arguments.makeNativeMap(JSONHelpers.toMap(data))
-
-            props.putMap("data", dataMap)
-          }
-          is JSONArray -> {
-            val dataList = Arguments.makeNativeArray(JSONHelpers.toList(data))
-
-            props.putArray("data", dataList)
-          }
-
-          is EngineIOException -> {
-            props.putString("data", data.message)
-          }
-
-          else -> props.putNull("data")
-        }
-      }
-
-      sendEvent(eventName, props)
-    }
+  @ReactMethod(isBlockingSynchronousMethod = true)
+  fun getIdSync(): String? {
+    return mSocket?.id()
   }
 }
