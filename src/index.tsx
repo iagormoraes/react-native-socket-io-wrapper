@@ -61,7 +61,7 @@ class SocketIO {
     this.SocketIOModule = NativeModules.RNSocketIO;
     this.SocketIOCallbacksList = {};
     this.path = options?.path || '/socket.io';
-    console.log(this.path);
+
     this.options = { ...options, path: this.path };
 
     this.eventEmitter = new NativeEventEmitter(NativeModules.SocketIo);
