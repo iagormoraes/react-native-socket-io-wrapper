@@ -36,13 +36,13 @@
     "ios",
     "android"
   ],
-  "repository": "https://github.com/itsiagorm/react-native-socket-io",
-  "author": "Iagor Moraes <iagor123@gmail.com> (https://github.com/itsiagorm)",
+  "repository": "https://github.com/iagormoraes/react-native-socket-io-wrapper",
+  "author": "Iagor Moraes <iagor123@gmail.com> (https://github.com/iagormoraes)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/itsiagorm/react-native-socket-io/issues"
+    "url": "https://github.com/iagormoraes/react-native-socket-io-wrapper/issues"
   },
-  "homepage": "https://github.com/itsiagorm/react-native-socket-io#readme",
+  "homepage": "https://github.com/iagormoraes/react-native-socket-io-wrapper#readme",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"
   },
