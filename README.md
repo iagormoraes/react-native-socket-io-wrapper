@@ -24,7 +24,7 @@ After experiencing some performance problems with the JS socket.io library in Re
 ## Installation
 
 ```sh
-npm install react-native-socket-io
+npm install @itsiagorm/react-native-socket-io
 ```
 
 ### Adding with TurboReactPackage class
