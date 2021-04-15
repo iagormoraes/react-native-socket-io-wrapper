@@ -107,6 +107,10 @@ class SocketIoModule(private val reactContext: ReactApplicationContext) : ReactC
         options.getString("query").let { socketOptions.query = it }
       }
 
+      if(options.hasKey("path")) {
+        options.getString("path").let { socketOptions.path = it }
+      }
+
       callbackRegisters.clear()
 
       mSocket?.off()

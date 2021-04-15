@@ -18,6 +18,7 @@ export type SocketIOOptions = {
   randomizationFactor?: number;
   timeout?: number;
   query?: string;
+  path?: string;
 };
 
 export type SocketIOEventData = any;
