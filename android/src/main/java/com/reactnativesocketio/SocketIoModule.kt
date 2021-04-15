@@ -13,6 +13,7 @@ import org.json.JSONObject
 import java.net.URISyntaxException
 import java.util.*
 import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
 import kotlin.math.round
 
 
@@ -20,7 +21,7 @@ import kotlin.math.round
 class SocketIoModule(private val reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
   companion object { const val NAME = "RNSocketIO" }
 
-  private var mSocket: Socket? = null
+  private var mSocketList = HashMap<String, Socket>()
 
   private val callbackRegisters: ArrayList<CallbackRegister> = ArrayList()
 
@@ -37,7 +38,11 @@ class SocketIoModule(private val reactContext: ReactApplicationContext) : ReactC
   override fun onCatalystInstanceDestroy() {
     super.onCatalystInstanceDestroy()
     // clean register to avoid storing unnecessarily data to memory
-    callbackRegisters.forEach { mSocket?.off(it.eventName, it.onEventListener) }
+    callbackRegisters.forEach {
+      for(key in mSocketList.keys) {
+        getSocketInstance(key)?.off(it.eventName, it.onEventListener)
+      }
+    }
 
     callbackRegisters.clear()
   }
@@ -59,6 +64,10 @@ class SocketIoModule(private val reactContext: ReactApplicationContext) : ReactC
     callbackRegisters.add(callbackRegister)
 
     return callbackRegister
+  }
+
+  private fun getSocketInstance(path: String): Socket? {
+    return mSocketList[path]
   }
 
   @ReactMethod
@@ -108,14 +117,12 @@ class SocketIoModule(private val reactContext: ReactApplicationContext) : ReactC
       }
 
       if(options.hasKey("path")) {
-        options.getString("path").let { socketOptions.path = it }
+        options.getString("path")?.let {
+          socketOptions.path = it
+        }
       }
 
-      callbackRegisters.clear()
-
-      mSocket?.off()
-
-      mSocket = IO.socket(url, socketOptions)
+      mSocketList[socketOptions.path] = IO.socket(url, socketOptions)
 
       callback.invoke(null)
     } catch (e: URISyntaxException) {
@@ -124,17 +131,23 @@ class SocketIoModule(private val reactContext: ReactApplicationContext) : ReactC
   }
 
   @ReactMethod
-  fun connect() {
+  fun connect(path: String) {
+    val mSocket = getSocketInstance(path)
+
     mSocket?.connect()
   }
 
   @ReactMethod
-  fun disconnect() {
+  fun disconnect(path: String) {
+    val mSocket = getSocketInstance(path)
+
     mSocket?.disconnect()
   }
 
   @ReactMethod
-  fun emit(eventName: String, options: ReadableMap) {
+  fun emit(path: String, eventName: String, options: ReadableMap) {
+    val mSocket = getSocketInstance(path)
+
     if(options.hasKey("data")) {
 
       when(options.getType("data")) {
@@ -169,7 +182,8 @@ class SocketIoModule(private val reactContext: ReactApplicationContext) : ReactC
   }
 
   @ReactMethod
-  fun on(eventName: String, callback: Callback) {
+  fun on(path: String, eventName: String, callback: Callback) {
+    val mSocket = getSocketInstance(path)
     val callbackRegister = buildCallbackRegister(eventName)
 
     callback.invoke(eventName, callbackRegister.uniqueID)
@@ -178,7 +192,8 @@ class SocketIoModule(private val reactContext: ReactApplicationContext) : ReactC
   }
 
   @ReactMethod
-  fun once(eventName: String, callback: Callback) {
+  fun once(path: String, eventName: String, callback: Callback) {
+    val mSocket = getSocketInstance(path)
     val callbackRegister = buildCallbackRegister(eventName)
 
     callback.invoke(eventName, callbackRegister.uniqueID)
@@ -187,7 +202,8 @@ class SocketIoModule(private val reactContext: ReactApplicationContext) : ReactC
   }
 
   @ReactMethod
-  fun off(eventName: String, uniqueID: String) {
+  fun off(path: String, eventName: String, uniqueID: String) {
+    val mSocket = getSocketInstance(path)
     val index = callbackRegisters.indexOfFirst { it.uniqueID == uniqueID }
 
     if(index < 0) return
@@ -198,22 +214,26 @@ class SocketIoModule(private val reactContext: ReactApplicationContext) : ReactC
   }
 
   @ReactMethod
-  fun connected(promise: Promise) {
-    promise.resolve(connectedSync())
+  fun connected(path: String, promise: Promise) {
+    promise.resolve(connectedSync(path))
   }
 
   @ReactMethod
-  fun getId(promise: Promise) {
-    promise.resolve(getIdSync())
+  fun getId(path: String, promise: Promise) {
+    promise.resolve(getIdSync(path))
   }
 
   @ReactMethod(isBlockingSynchronousMethod = true)
-  fun connectedSync(): Boolean {
+  fun connectedSync(path: String): Boolean {
+    val mSocket = getSocketInstance(path)
+
     return mSocket?.connected() ?: false
   }
 
   @ReactMethod(isBlockingSynchronousMethod = true)
-  fun getIdSync(): String? {
+  fun getIdSync(path: String): String? {
+    val mSocket = getSocketInstance(path)
+
     return mSocket?.id()
   }
 }

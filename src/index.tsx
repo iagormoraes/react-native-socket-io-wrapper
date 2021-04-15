@@ -32,16 +32,16 @@ export type SocketIOModuleType = {
     options: SocketIOOptions,
     callbackResponse: SocketCallbackResponse
   ): void;
-  connect(): void;
-  disconnect(): void;
-  emit(eventName: string, options: SocketIOEventData): void;
-  on(eventName: string, callback: Function): void;
-  once(eventName: string, callback: Function): void;
-  off(eventName: string, uniqueID: string): void;
-  connected(callback: SocketConnectedCallback): void;
-  connectedSync(): boolean;
-  getId(callback: SocketIdCallback): void;
-  getIdSync(): string | null;
+  connect(path: string): void;
+  disconnect(path: string): void;
+  emit(path: string, eventName: string, options: SocketIOEventData): void;
+  on(path: string, eventName: string, callback: Function): void;
+  once(path: string, eventName: string, callback: Function): void;
+  off(path: string, eventName: string, uniqueID: string): void;
+  connected(path: string, callback: SocketConnectedCallback): void;
+  connectedSync(path: string): boolean;
+  getId(path: string, callback: SocketIdCallback): void;
+  getIdSync(path: string): string | null;
 };
 
 class SocketIO {
@@ -54,10 +54,15 @@ class SocketIO {
     };
   };
   eventEmitter: NativeEventEmitter;
+  path: string;
+  options: SocketIOOptions;
 
   constructor(url: string, options?: SocketIOOptions) {
     this.SocketIOModule = NativeModules.RNSocketIO;
     this.SocketIOCallbacksList = {};
+    this.path = options?.path || '/socket.io';
+    console.log(this.path);
+    this.options = { ...options, path: this.path };
 
     this.eventEmitter = new NativeEventEmitter(NativeModules.SocketIo);
 
@@ -72,7 +77,7 @@ class SocketIO {
 
     this.SocketIOModule.initialize(
       url,
-      options ?? {},
+      this.options,
       this._callCallbackResponse
     );
   }
@@ -87,14 +92,14 @@ class SocketIO {
    * Open socket connection.
    */
   connect() {
-    this.SocketIOModule.connect();
+    this.SocketIOModule.connect(this.path);
   }
 
   /**
    * Close socket connection.
    */
   disconnect() {
-    this.SocketIOModule.disconnect();
+    this.SocketIOModule.disconnect(this.path);
   }
 
   /**
@@ -103,7 +108,7 @@ class SocketIO {
    * @param data Data to send on socket event.
    */
   emit(eventName: string, data?: SocketIOEventData) {
-    this.SocketIOModule.emit(eventName, { data });
+    this.SocketIOModule.emit(this.path, eventName, { data });
   }
 
   /**
@@ -113,6 +118,7 @@ class SocketIO {
    */
   on(eventName: string, callback: Function) {
     this.SocketIOModule.on(
+      this.path,
       eventName,
       (nativeEventName: string, uniqueID: string) => {
         this.SocketIOCallbacksList[uniqueID] = {
@@ -131,6 +137,7 @@ class SocketIO {
    */
   once(eventName: string, callback: Function) {
     this.SocketIOModule.once(
+      this.path,
       eventName,
       (nativeEventName: string, uniqueID: string) => {
         this.SocketIOCallbacksList[uniqueID] = {
@@ -156,7 +163,7 @@ class SocketIO {
       if (listItem.eventName === eventName && listItem.callback === callback) {
         keyToDelete = listItem.uniqueID;
 
-        this.SocketIOModule.off(eventName, keyToDelete);
+        this.SocketIOModule.off(this.path, eventName, keyToDelete);
 
         break;
       }
@@ -172,7 +179,7 @@ class SocketIO {
    * @param callback Callback with connection status of socket.
    */
   connected(callback: SocketConnectedCallback) {
-    this.SocketIOModule.connected(callback);
+    this.SocketIOModule.connected(this.path, callback);
   }
 
   /**
@@ -180,7 +187,7 @@ class SocketIO {
    * @param callback Callback with id of socket.
    */
   getId(callback: SocketIdCallback) {
-    this.SocketIOModule.getId(callback);
+    this.SocketIOModule.getId(this.path, callback);
   }
 
   /**
@@ -188,7 +195,7 @@ class SocketIO {
    * Warning: this method are synchronous blocking UI, use it carefully.
    */
   connectedSync() {
-    return this.SocketIOModule.connectedSync();
+    return this.SocketIOModule.connectedSync(this.path);
   }
 
   /**
@@ -196,7 +203,7 @@ class SocketIO {
    * Warning: this method are synchronous blocking UI, use it carefully.
    */
   getIdSync() {
-    return this.SocketIOModule.getIdSync();
+    return this.SocketIOModule.getIdSync(this.path);
   }
 
   static serializeQuery(object: any) {
