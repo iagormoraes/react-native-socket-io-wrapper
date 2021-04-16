@@ -147,38 +147,43 @@ class SocketIoModule(private val reactContext: ReactApplicationContext) : ReactC
   @ReactMethod
   fun emit(path: String, eventName: String, options: ReadableMap) {
     val mSocket = getSocketInstance(path)
+    var data: Any? = null
 
     if(options.hasKey("data")) {
-
       when(options.getType("data")) {
         ReadableType.Map -> {
-          mSocket?.emit(eventName, JSONObject(options.getMap("data")!!.toHashMap()))
+          options.getMap("data")?.let { data = JSONObject(it.toHashMap()) }
         }
 
         ReadableType.Array -> {
-          mSocket?.emit(eventName, JSONArray(options.getArray("data")!!.toArrayList()))
+          options.getArray("data")?.let { data = JSONArray(it.toArrayList()) }
         }
 
         ReadableType.Number -> {
           val number: Double = options.getDouble("data")
-          if (number == round(number)) {
-            mSocket?.emit(eventName, number.toInt())
+
+          data = if (number == round(number)) {
+            number.toInt()
           } else {
-            mSocket?.emit(eventName, number)
+            number
           }
         }
 
         ReadableType.Boolean -> {
-          mSocket?.emit(eventName, options.getBoolean("data"))
+          data = options.getBoolean("data")
         }
 
         ReadableType.Null -> {
-          mSocket?.emit(eventName, null)
+          data = null
         }
 
-        else -> mSocket?.emit(eventName, options.getString("data")!!)
+        ReadableType.String -> {
+          options.getString("data")?.let { data = it }
+        }
       }
     }
+
+    mSocket?.emit(eventName, data)
   }
 
   @ReactMethod

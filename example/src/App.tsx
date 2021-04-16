@@ -29,6 +29,8 @@ function useSocketIO() {
     (data) => {
       console.log('onConnection', data);
 
+      socketIO.emit('send_nothing');
+
       socketIO.emit('send_number', 124.25);
       socketIO.emit('send_string', '123');
       socketIO.emit('send_null', null);
@@ -66,6 +68,10 @@ function useSocketIO() {
             },
           ],
         },
+        1,
+        false,
+        '',
+        null,
       ]);
     },
     [socketIO]
@@ -105,13 +111,14 @@ function useSocketIO() {
     socketIO.connect();
 
     socketIO.on('connect', onConnection);
-    // socketIO.on('reconnect_attempt', onReconnectAttempt);
-    // socketIO.on('send_number', onDataReceived);
-    // socketIO.on('send_string', onDataReceived);
-    // socketIO.on('send_null', onDataReceived);
-    // socketIO.on('send_boolean', onDataReceived);
-    // socketIO.on('send_map', onDataReceived);
-    // socketIO.on('send_array', onDataReceived);
+    socketIO.on('reconnect_attempt', onReconnectAttempt);
+    socketIO.on('send_number', onDataReceived);
+    socketIO.on('send_string', onDataReceived);
+    socketIO.on('send_null', onDataReceived);
+    socketIO.on('send_boolean', onDataReceived);
+    socketIO.on('send_map', onDataReceived);
+    socketIO.on('send_array', onDataReceived);
+    socketIO.on('send_nothing', onDataReceived);
     socketIO.on('error', onError);
 
     socketIO.on('receive_message', onMessage);
@@ -120,12 +127,13 @@ function useSocketIO() {
       socketIO.disconnect();
 
       socketIO.off('connect', onConnection);
-      // socketIO.off('reconnect_attempt', onReconnectAttempt);
-      // socketIO.off('send_number', onDataReceived);
-      // socketIO.off('send_string', onDataReceived);
-      // socketIO.off('send_null', onDataReceived);
-      // socketIO.off('send_boolean', onDataReceived);
-      // socketIO.off('send_array', onDataReceived);
+      socketIO.off('reconnect_attempt', onReconnectAttempt);
+      socketIO.off('send_number', onDataReceived);
+      socketIO.off('send_string', onDataReceived);
+      socketIO.off('send_null', onDataReceived);
+      socketIO.off('send_boolean', onDataReceived);
+      socketIO.off('send_array', onDataReceived);
+      socketIO.off('send_nothing', onDataReceived);
       socketIO.off('error', onError);
       socketIO.off('receive_message', onMessage);
     };
