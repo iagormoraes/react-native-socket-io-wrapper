@@ -132,6 +132,20 @@ Get id of socket.
 
 ⚠️ this method are synchronous blocking UI, use it carefully.
 
+### updateSocketOptions
+```js
+socketIO.updateSocketOptions(updatedOptions);
+```
+Update socket options, this updates general instances paths.
+
+### updateSocketOptionsSync
+```js
+socketIO.updateSocketOptionsSync(updatedOptions);
+```
+Update socket options, this updates general instances paths.
+
+⚠️ this method are synchronous blocking UI, use it carefully.
+
 ## Todos
 
 - Write tests
