@@ -214,7 +214,10 @@ class SocketIO {
    * @param callback
    */
   updateSocketOptions(options: SocketIOOptions, callback: Function) {
-    if(!options) throw new Error('options is a required property of type "SocketIOOptions"');
+    if (!options)
+      throw new Error(
+        'options is a required property of type "SocketIOOptions"'
+      );
 
     this.SocketIOModule.updateSocketOptions(options, callback);
   }
@@ -225,7 +228,10 @@ class SocketIO {
    * @param options
    */
   updateSocketOptionsSync(options: SocketIOOptions) {
-    if(!options) throw new Error('options is a required property of type "SocketIOOptions"');
+    if (!options)
+      throw new Error(
+        'options is a required property of type "SocketIOOptions"'
+      );
 
     this.SocketIOModule.updateSocketOptionsSync(options);
   }
