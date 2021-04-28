@@ -25,6 +25,8 @@ class SocketIoModule(private val reactContext: ReactApplicationContext) : ReactC
 
   private val callbackRegisters: ArrayList<CallbackRegister> = ArrayList()
 
+  private var socketOptions = IO.Options()
+
   private val callbackListener = object : SocketCallback {
     override fun onReceive(eventName: String, props: WritableMap) {
       sendEvent(eventName, props)
@@ -73,54 +75,7 @@ class SocketIoModule(private val reactContext: ReactApplicationContext) : ReactC
   @ReactMethod
   fun initialize(url: String, options: ReadableMap, callback: Callback) {
     try {
-      val socketOptions = IO.Options()
-
-      if(options.hasKey("transports")) {
-        options.getArray("transports")?.let {
-          val transportsList = it.toArrayList()
-          val transportsArr = arrayOfNulls<String>(transportsList.size)
-
-          socketOptions.transports = transportsList.toArray(transportsArr)
-        }
-      }
-
-      if(options.hasKey("forceNew")) {
-        options.getBoolean("forceNew").let { socketOptions.forceNew = it }
-      }
-
-      if(options.hasKey("multiplex")) {
-        options.getBoolean("multiplex").let { socketOptions.multiplex = it }
-      }
-
-      if(options.hasKey("reconnectionAttempts")) {
-        options.getInt("reconnectionAttempts").let { socketOptions.reconnectionAttempts = it }
-      }
-
-      if(options.hasKey("reconnectionDelay")) {
-        options.getInt("reconnectionDelay").let { socketOptions.reconnectionDelay = it.toLong() }
-      }
-
-      if(options.hasKey("reconnectionDelayMax")) {
-        options.getInt("reconnectionDelayMax").let { socketOptions.reconnectionDelayMax = it.toLong() }
-      }
-
-      if(options.hasKey("randomizationFactor")) {
-        options.getInt("randomizationFactor").let { socketOptions.randomizationFactor = it.toDouble() }
-      }
-
-      if(options.hasKey("timeout")) {
-        options.getInt("timeout").let { socketOptions.timeout = it.toLong() }
-      }
-
-      if(options.hasKey("query")) {
-        options.getString("query").let { socketOptions.query = it }
-      }
-
-      if(options.hasKey("path")) {
-        options.getString("path")?.let {
-          socketOptions.path = it
-        }
-      }
+      updateSocketOptionsSync(options)
 
       mSocketList[socketOptions.path] = IO.socket(url, socketOptions)
 
@@ -147,43 +102,38 @@ class SocketIoModule(private val reactContext: ReactApplicationContext) : ReactC
   @ReactMethod
   fun emit(path: String, eventName: String, options: ReadableMap) {
     val mSocket = getSocketInstance(path)
-    var data: Any? = null
 
     if(options.hasKey("data")) {
+
       when(options.getType("data")) {
         ReadableType.Map -> {
-          options.getMap("data")?.let { data = JSONObject(it.toHashMap()) }
+          mSocket?.emit(eventName, JSONObject(options.getMap("data")!!.toHashMap()))
         }
 
         ReadableType.Array -> {
-          options.getArray("data")?.let { data = JSONArray(it.toArrayList()) }
+          mSocket?.emit(eventName, JSONArray(options.getArray("data")!!.toArrayList()))
         }
 
         ReadableType.Number -> {
           val number: Double = options.getDouble("data")
-
-          data = if (number == round(number)) {
-            number.toInt()
+          if (number == round(number)) {
+            mSocket?.emit(eventName, number.toInt())
           } else {
-            number
+            mSocket?.emit(eventName, number)
           }
         }
 
         ReadableType.Boolean -> {
-          data = options.getBoolean("data")
+          mSocket?.emit(eventName, options.getBoolean("data"))
         }
 
         ReadableType.Null -> {
-          data = null
+          mSocket?.emit(eventName, null)
         }
 
-        ReadableType.String -> {
-          options.getString("data")?.let { data = it }
-        }
+        else -> mSocket?.emit(eventName, options.getString("data")!!)
       }
     }
-
-    mSocket?.emit(eventName, data)
   }
 
   @ReactMethod
@@ -228,6 +178,13 @@ class SocketIoModule(private val reactContext: ReactApplicationContext) : ReactC
     promise.resolve(getIdSync(path))
   }
 
+  @ReactMethod
+  fun updateSocketOptions(options: ReadableMap, callback: Callback) {
+    updateSocketOptionsSync(options)
+
+    callback.invoke(null)
+  }
+
   @ReactMethod(isBlockingSynchronousMethod = true)
   fun connectedSync(path: String): Boolean {
     val mSocket = getSocketInstance(path)
@@ -240,5 +197,55 @@ class SocketIoModule(private val reactContext: ReactApplicationContext) : ReactC
     val mSocket = getSocketInstance(path)
 
     return mSocket?.id()
+  }
+
+  @ReactMethod(isBlockingSynchronousMethod = true)
+  fun updateSocketOptionsSync(options: ReadableMap) {
+    if(options.hasKey("transports")) {
+      options.getArray("transports")?.let {
+        val transportsList = it.toArrayList()
+        val transportsArr = arrayOfNulls<String>(transportsList.size)
+
+        socketOptions.transports = transportsList.toArray(transportsArr)
+      }
+    }
+
+    if(options.hasKey("forceNew")) {
+      options.getBoolean("forceNew").let { socketOptions.forceNew = it }
+    }
+
+    if(options.hasKey("multiplex")) {
+      options.getBoolean("multiplex").let { socketOptions.multiplex = it }
+    }
+
+    if(options.hasKey("reconnectionAttempts")) {
+      options.getInt("reconnectionAttempts").let { socketOptions.reconnectionAttempts = it }
+    }
+
+    if(options.hasKey("reconnectionDelay")) {
+      options.getInt("reconnectionDelay").let { socketOptions.reconnectionDelay = it.toLong() }
+    }
+
+    if(options.hasKey("reconnectionDelayMax")) {
+      options.getInt("reconnectionDelayMax").let { socketOptions.reconnectionDelayMax = it.toLong() }
+    }
+
+    if(options.hasKey("randomizationFactor")) {
+      options.getInt("randomizationFactor").let { socketOptions.randomizationFactor = it.toDouble() }
+    }
+
+    if(options.hasKey("timeout")) {
+      options.getInt("timeout").let { socketOptions.timeout = it.toLong() }
+    }
+
+    if(options.hasKey("query")) {
+      options.getString("query").let { socketOptions.query = it }
+    }
+
+    if(options.hasKey("path")) {
+      options.getString("path")?.let {
+        socketOptions.path = it
+      }
+    }
   }
 }

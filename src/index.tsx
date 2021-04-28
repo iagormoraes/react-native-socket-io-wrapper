@@ -42,6 +42,8 @@ export type SocketIOModuleType = {
   connectedSync(path: string): boolean;
   getId(path: string, callback: SocketIdCallback): void;
   getIdSync(path: string): string | null;
+  updateSocketOptions(options: SocketIOOptions, callback: Function): void;
+  updateSocketOptionsSync(options: SocketIOOptions): void;
 };
 
 class SocketIO {
@@ -204,6 +206,28 @@ class SocketIO {
    */
   getIdSync() {
     return this.SocketIOModule.getIdSync(this.path);
+  }
+
+  /**
+   * Update socket options, this updates general instances paths.
+   * @param options
+   * @param callback
+   */
+  updateSocketOptions(options: SocketIOOptions, callback: Function) {
+    if(!options) throw new Error('options is a required property of type "SocketIOOptions"');
+
+    this.SocketIOModule.updateSocketOptions(options, callback);
+  }
+
+  /**
+   * Update socket options, this updates general instances paths.
+   * Warning: this method are synchronous blocking UI, use it carefully.
+   * @param options
+   */
+  updateSocketOptionsSync(options: SocketIOOptions) {
+    if(!options) throw new Error('options is a required property of type "SocketIOOptions"');
+
+    this.SocketIOModule.updateSocketOptionsSync(options);
   }
 
   static serializeQuery(object: any) {
