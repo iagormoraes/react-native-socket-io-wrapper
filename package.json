@@ -1,6 +1,6 @@
 {
   "name": "react-native-socket-io-wrapper",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "A socket.io wrapper for react native.",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
