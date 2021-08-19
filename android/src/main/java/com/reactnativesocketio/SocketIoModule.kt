@@ -133,6 +133,8 @@ class SocketIoModule(private val reactContext: ReactApplicationContext) : ReactC
 
         else -> mSocket?.emit(eventName, options.getString("data")!!)
       }
+    } else {
+      mSocket?.emit(eventName)
     }
   }
 
