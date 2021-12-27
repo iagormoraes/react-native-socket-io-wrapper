@@ -73,6 +73,12 @@ class SocketIoModule(private val reactContext: ReactApplicationContext) : ReactC
   }
 
   @ReactMethod
+  fun addListener(eventName: String) {}
+
+  @ReactMethod
+  fun removeListeners(count: Int) {}
+
+  @ReactMethod
   fun initialize(url: String, options: ReadableMap, callback: Callback) {
     try {
       updateSocketOptionsSync(options)
